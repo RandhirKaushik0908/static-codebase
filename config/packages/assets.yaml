@@ -1,0 +1,6 @@
+parameters:
+    assets_version: ~
+
+framework:
+    assets:
+        version: '%assets_version%'

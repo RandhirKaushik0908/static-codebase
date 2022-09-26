@@ -1,0 +1,140 @@
+{
+    "type": "project",
+    "license": "proprietary",
+    "require": {
+        "php": "^8.1",
+        "ext-ctype": "*",
+        "ext-iconv": "*",
+        "doctrine/annotations": "^1.0",
+        "doctrine/doctrine-bundle": "^2.5",
+        "doctrine/doctrine-migrations-bundle": "^3.2",
+        "doctrine/orm": "^2.11",
+        "knplabs/knp-paginator-bundle": "^5.9",
+        "phpdocumentor/reflection-docblock": "^5.3",
+        "phpstan/phpdoc-parser": "^1.2",
+        "sensio/framework-extra-bundle": "^6.1",
+        "symfony/asset": "^6.0",
+        "symfony/console": "^6.0",
+        "symfony/dotenv": "^6.0",
+        "symfony/expression-language": "^6.0",
+        "symfony/flex": "^2.2",
+        "symfony/form": "^6.0",
+        "symfony/framework-bundle": "^6.0",
+        "symfony/http-client": "^6.0",
+        "symfony/intl": "^6.0",
+        "symfony/mailer": "^6.0",
+        "symfony/mime": "^6.0",
+        "symfony/monolog-bundle": "^3.0",
+        "symfony/notifier": "^6.0",
+        "symfony/process": "^6.0",
+        "symfony/property-access": "^6.0",
+        "symfony/property-info": "^6.0",
+        "symfony/proxy-manager-bridge": "^6.0",
+        "symfony/runtime": "^6.0",
+        "symfony/security-bundle": "^6.0",
+        "symfony/serializer": "^6.0",
+        "symfony/string": "^6.0",
+        "symfony/translation": "^6.0",
+        "symfony/twig-bundle": "^6.0",
+        "symfony/validator": "^6.0",
+        "symfony/web-link": "^6.0",
+        "symfony/yaml": "^6.0",
+        "twig/twig": "^2.12|^3.0",
+        "twig/extra-bundle": "^2.12|^3.0"
+    },
+    "require-dev": {
+        "deployer/deployer": "^7.0",
+        "phpstan/extension-installer": "^1.1",
+        "phpstan/phpstan": "^1.4",
+        "phpstan/phpstan-doctrine": "^1.2",
+        "phpstan/phpstan-symfony": "^1.1",
+        "phpunit/phpunit": "^9.5",
+        "symfony/browser-kit": "^6.0",
+        "symfony/css-selector": "^6.0",
+        "symfony/debug-bundle": "^6.0",
+        "symfony/maker-bundle": "^1.46",
+        "symfony/phpunit-bridge": "^6.0",
+        "symfony/stopwatch": "^6.0",
+        "symfony/var-dumper": "^6.0",
+        "symfony/web-profiler-bundle": "^6.0",
+        "php-cs-fixer/shim": "^3.6",
+        "rector/rector": "^0.14"
+    },
+    "config": {
+        "optimize-autoloader": true,
+        "preferred-install": {
+            "*": "dist"
+        },
+        "sort-packages": false,
+        "allow-plugins": {
+            "composer/package-versions-deprecated": true,
+            "phpstan/extension-installer": true,
+            "symfony/flex": true,
+            "symfony/runtime": true
+        }
+    },
+    "autoload": {
+        "psr-4": {
+            "App\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "App\\Tests\\": "tests/"
+        }
+    },
+    "replace": {
+        "paragonie/random_compat": "2.*",
+        "symfony/polyfill-ctype": "*",
+        "symfony/polyfill-iconv": "*",
+        "symfony/polyfill-php72": "*",
+        "symfony/polyfill-php71": "*",
+        "symfony/polyfill-php70": "*",
+        "symfony/polyfill-php56": "*"
+    },
+    "scripts": {
+        "lint:rector": "rector process",
+        "lint:php-cs-fixer": "php-cs-fixer fix -v",
+        "lint": [
+            "rector process",
+            "php-cs-fixer fix -v"
+        ],
+        "test:container": "bin/console lint:container",
+        "test:php-cs-fixer": "php-cs-fixer fix -v --dry-run",
+        "test:phpstan": "phpstan analyse --ansi --memory-limit=-1",
+        "test:rector": "rector process --dry-run",
+        "test:doctrine-schema": "bin/console doctrine:schema:validate --skip-sync",
+        "test:yaml": "bin/console lint:yaml config/ src/",
+        "test:twig": "bin/console lint:twig src/ templates/ --show-deprecations",
+        "test": [
+            "bin/console lint:container",
+            "php-cs-fixer fix -v --dry-run",
+            "phpstan analyse --ansi --memory-limit=-1",
+            "rector process --dry-run",
+            "bin/console doctrine:schema:validate --skip-sync",
+            "bin/console lint:yaml config/ src/",
+            "bin/console lint:twig src/ templates/ --show-deprecations"
+        ],
+        "auto-scripts": {
+            "cache:clear": "symfony-cmd",
+            "assets:install %PUBLIC_DIR% --symlink": "symfony-cmd",
+            "[ $COMPOSER_DEV_MODE -eq 1 ] && ln -sf vendor/bin/dep dep || echo ''": "script",
+            "[ $COMPOSER_DEV_MODE -eq 1 ] && test ! -f public/.htaccess && cp public/.htaccess.dist public/.htaccess || echo ''": "script"
+        },
+        "post-install-cmd": [
+            "@auto-scripts"
+        ],
+        "post-update-cmd": [
+            "@auto-scripts"
+        ]
+    },
+    "conflict": {
+        "symfony/symfony": "*"
+    },
+    "extra": {
+        "symfony": {
+            "allow-contrib": false,
+            "require": "^6.0"
+        }
+    }
+}

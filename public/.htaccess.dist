@@ -1,0 +1,130 @@
+# Based on http://stackoverflow.com/questions/17313023/symfony-2-2-1-url-rewrite-issue
+# Modified to use index.php as per symfony >= 4.0 installer
+
+# Use the front controller as index file. It serves as fallback solution when
+# every other rewrite/redirect fails (e.g. in an aliased environment without
+# mod_rewrite). Additionally, this reduces the matching process for the
+# startpage (path "/") because otherwise Apache will apply the rewritting rules
+# to each configured DirectoryIndex file (e.g. index.php, index.html, index.pl).
+DirectoryIndex index.php
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # Redirect to URI without front controller to prevent duplicate content
+    # (with and without `/index.php`). Only do this redirect on the initial
+    # rewrite by Apache and not on subsequent cycles. Otherwise we would get an
+    # endless redirect loop (request -> rewrite to front controller ->
+    # redirect -> request -> ...).
+    # So in case you get a "too many redirects" error or you always get redirected
+    # to the startpage because your Apache does not expose the REDIRECT_STATUS
+    # environment variable, you have 2 choices:
+    # - disable this feature by commenting the following 2 lines or
+    # - use Apache >= 2.3.9 and replace all L flags by END flags and remove the
+    #   following RewriteCond (best solution)
+    RewriteCond %{ENV:REDIRECT_STATUS} ^$
+    RewriteRule ^index\.php(/(.*)|$) %{CONTEXT_PREFIX}/$2 [R=301,L]
+
+    # If the requested filename exists, simply serve it.
+    # We only want to let Apache serve files and not directories.
+    RewriteCond %{REQUEST_FILENAME} -f
+    RewriteRule .? - [L]
+
+    # cache-bust assets url rewrite
+    # Example format: /cpv-10/js/test123.js -> /js/test123.js
+    # This allows us to change the asset version and "bust" intermediate caches (like varnish)
+    # See http://symfony.com/doc/current/reference/configuration/framework.html#ref-framework-assets-version
+    # See http://symfony.com/doc/current/reference/configuration/framework.html#assets-version-format
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteRule ^cpv-\d+\/(.+)$ $1 [L]
+
+    RewriteCond %{REQUEST_FILENAME} -f
+    RewriteRule ^(.*)$ index.php [QSA,L]
+
+    # The following rewrites all other queries to the front controller. The
+    # condition ensures that if you are using Apache aliases to do mass virtual
+    # hosting, the base path will be prepended to allow proper resolution of the
+    # index.php file; it will work in non-aliased environments as well, providing
+    # a safe, one-size fits all solution.
+    RewriteCond %{REQUEST_URI}::$1 ^(/.+)(.+)::\2$
+    RewriteRule ^(.*) - [E=BASE:%1]
+    RewriteRule .? %{ENV:BASE}index.php [L]
+</IfModule>
+
+<IfModule !mod_rewrite.c>
+    <IfModule mod_alias.c>
+        # When mod_rewrite is not available, we instruct a temporary redirect of
+        # the startpage to the front controller explicitly so that the website
+        # and the generated links can still be used.
+        RedirectMatch 302 ^/$ /index.php/
+        # RedirectTemp cannot be used instead
+    </IfModule>
+</IfModule>
+
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE text/css
+    AddOutputFilterByType DEFLATE text/javascript
+    AddOutputFilterByType DEFLATE application/x-javascript
+    AddOutputFilterByType DEFLATE application/javascript
+    AddOutputFilterByType DEFLATE text/x-component
+    AddOutputFilterByType DEFLATE text/html
+    AddOutputFilterByType DEFLATE text/richtext
+    AddOutputFilterByType DEFLATE image/svg+xml
+    AddOutputFilterByType DEFLATE text/plain
+    AddOutputFilterByType DEFLATE text/xsd
+    AddOutputFilterByType DEFLATE text/xsl
+    AddOutputFilterByType DEFLATE text/xml
+    AddOutputFilterByType DEFLATE image/x-icon
+    AddOutputFilterByType DEFLATE application/json
+    AddOutputFilterByType DEFLATE application/x-font
+    AddOutputFilterByType DEFLATE application/x-font-truetype
+    AddOutputFilterByType DEFLATE application/x-font-ttf
+    AddOutputFilterByType DEFLATE application/x-font-otf
+    AddOutputFilterByType DEFLATE application/x-font-opentype
+    AddOutputFilterByType DEFLATE application/vnd.ms-fontobject
+    AddOutputFilterByType DEFLATE font/ttf
+    AddOutputFilterByType DEFLATE font/otf
+    AddOutputFilterByType DEFLATE font/opentype
+    AddOutputFilterByType DEFLATE application/x-font-woff
+    AddOutputFilterByType DEFLATE application/x-font-woff2
+</IfModule>
+
+<IfModule mod_expires.c>
+    ExpiresActive On
+    ExpiresByType image/webp "access plus 1 year"
+    ExpiresByType image/jpg "access plus 1 year"
+    ExpiresByType image/jpeg "access plus 1 year"
+    ExpiresByType image/gif "access plus 1 year"
+    ExpiresByType image/png "access plus 1 year"
+    ExpiresByType image/svg+xml "access plus 1 year"
+    ExpiresByType text/css "access plus 1 year"
+    ExpiresByType text/x-javascript "access plus 1 year"
+    ExpiresByType application/x-font-woff "access plus 1 year"
+    ExpiresByType application/x-font-woff2 "access plus 1 year"
+    ExpiresByType font/woff2 "access plus 1 year"
+    ExpiresByType application/x-shockwave-flash "access plus 1 month"
+    ExpiresByType application/pdf "access plus 1 month"
+    ExpiresByType image/x-icon "access plus 1 month"
+</IfModule>
+
+<IfModule mod_expires.c>
+    # Set up caching on media files for 1 month
+    <FilesMatch "\.(ico|png|gif|jpg|jpeg|webp|swf|flv|pdf|mov|mp3|wmv|ppt|doc|docx)(\?.*|)$">
+        # 30 days
+        ExpiresDefault A2592000
+        Header append Cache-Control "public"
+    </FilesMatch>
+
+    <FilesMatch "\.(css|js|svg|woff|woff2)(\?.*|)$">
+        # 365 days
+        ExpiresDefault A31536000
+        Header append Cache-Control "public"
+    </FilesMatch>
+</IfModule>
+
+<IfModule mod_headers.c>
+    <FilesMatch "\.(ttf|ttc|otf|eot|woff|woff2|css)(\?.*|)$">
+        Header set Access-Control-Allow-Origin "*"
+    </FilesMatch>
+</IfModule>
